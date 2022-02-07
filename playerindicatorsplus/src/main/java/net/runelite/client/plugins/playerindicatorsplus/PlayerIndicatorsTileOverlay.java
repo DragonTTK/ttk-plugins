@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Owain van Brakel <https:github.com/Owain94>
+ * Copyright (c) 2018, Kamiel <https://github.com/Kamielvf>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,29 +23,51 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-rootProject.name = "Sundar External Plugins"
+package net.runelite.client.plugins.playerindicators;
 
-include(":disablefakeclaw")
-include(":extendedchat")
-include(":oneclick2tick")
-include(":oneclick3tfish")
-include(":oneclickagility")
-include(":oneclickalch")
-include(":oneclickdaeyalt")
-include(":oneclickdropper")
-include(":oneclickrunenable")
-include(":oneclickthieving")
-include(":reflection")
-include(":soundfilter")
-include(":tradewindow")
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import javax.inject.Inject;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayPriority;
+import net.runelite.client.ui.overlay.OverlayUtil;
 
+public class PlayerIndicatorsTileOverlay extends Overlay
+{
+	private final PlayerIndicatorsService playerIndicatorsService;
+	private final PlayerIndicatorsConfig config;
 
-for (project in rootProject.children) {
-    project.apply {
-        projectDir = file(name)
-        buildFileName = "$name.gradle.kts"
+	@Inject
+	private PlayerIndicatorsTileOverlay(PlayerIndicatorsConfig config, PlayerIndicatorsService playerIndicatorsService)
+	{
+		this.config = config;
+		this.playerIndicatorsService = playerIndicatorsService;
+		setLayer(OverlayLayer.ABOVE_SCENE);
+		setPosition(OverlayPosition.DYNAMIC);
+		setPriority(OverlayPriority.MED);
+	}
 
-        require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
-        require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }
-    }
+	@Override
+	public Dimension render(Graphics2D graphics)
+	{
+		if (!config.drawTiles())
+		{
+			return null;
+		}
+
+		playerIndicatorsService.forEachPlayer((player, color) ->
+		{
+			final Polygon poly = player.getCanvasTilePoly();
+
+			if (poly != null)
+			{
+				OverlayUtil.renderPolygon(graphics, poly, color);
+			}
+		});
+
+		return null;
+	}
 }
