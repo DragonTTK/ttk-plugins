@@ -23,7 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.runelite.client.plugins.playerindicators;
+package net.runelite.client.plugins.playerindicatorsplus;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
