@@ -59,7 +59,7 @@ import net.runelite.client.util.ColorUtil;
 @PluginDescriptor(
 	name = "Player Indicators Plus",
 	description = "Highlight players on-screen and/or on the minimap.",
-	tags = {"highlight", "minimap", "overlay", "players"}
+	tags = {"dragonttk","mythicalzxc","highlight", "minimap", "overlay", "players"}
 )
 public class PlayerIndicatorsPlugin extends Plugin
 {

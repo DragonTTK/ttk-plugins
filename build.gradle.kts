@@ -1,3 +1,7 @@
+//this works
+
+import ProjectVersions.openosrsVersion
+
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -5,50 +9,40 @@ buildscript {
 }
 
 plugins {
+    java //this enables annotationProcessor and implementation in dependencies
     checkstyle
-    java
-    //id("com.simonharrer.modernizer") version "2.1.0-1" apply false
-    id("com.github.ben-manes.versions") version "0.36.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.15"
 }
 
 project.extra["GithubUrl"] = "https://github.com/DragonTTK/ttk-plugins"
 
 apply<BootstrapPlugin>()
-apply<VersionPlugin>()
 
 allprojects {
-    group = "com.openosrs"
-    version = ProjectVersions.openosrsVersion
+    group = "com.openosrs.externals"
     apply<MavenPublishPlugin>()
 }
 
+allprojects {
+    apply<MavenPublishPlugin>()
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+}
+
 subprojects {
-    var subprojectName = name
     group = "com.openosrs.externals"
 
     project.extra["PluginProvider"] = "DragonTTK"
-    project.extra["ProjectUrl"] = "https://discord.com/invite/6j5gbekPjA"
+    project.extra["ProjectSupportUrl"] = "https://discord.com/invite/6j5gbekPjA"
     project.extra["PluginLicense"] = "3-Clause BSD License"
 
     repositories {
         jcenter {
             content {
                 excludeGroupByRegex("com\\.openosrs.*")
-                excludeGroupByRegex("com\\.runelite.*")
-            }
-        }
-
-        exclusiveContent {
-            forRepository {
-                maven {
-                    url = uri("https://repo.runelite.net")
-                }
-            }
-            filter {
-                includeModule("net.runelite", "discord")
-                includeModule("net.runelite.jogl", "jogl-all")
-                includeModule("net.runelite.gluegen", "gluegen-rt")
             }
         }
 
@@ -58,43 +52,37 @@ subprojects {
             }
             filter {
                 includeGroupByRegex("com\\.openosrs.*")
+                includeGroupByRegex("com\\.owain.*")
             }
         }
     }
 
     apply<JavaPlugin>()
-    apply(plugin = "checkstyle")
-    //apply(plugin = "com.simonharrer.modernizer")
-    apply(plugin = "com.github.ben-manes.versions")
-    apply(plugin = "se.patrikerdes.use-latest-versions")
 
     dependencies {
-        annotationProcessor(group = "org.projectlombok", name = "lombok", version = "1.18.16")
-        annotationProcessor(group = "org.pf4j", name = "pf4j", version = "3.5.0")
+        annotationProcessor(Libraries.lombok)
+        annotationProcessor(Libraries.pf4j)
 
-        compileOnly(group = "com.openosrs", name = "http-api", version = ProjectVersions.openosrsVersion)
-        compileOnly(group = "com.openosrs", name = "runelite-api", version = ProjectVersions.openosrsVersion)
-        compileOnly(group = "com.openosrs", name = "runelite-client", version = ProjectVersions.openosrsVersion)
-        compileOnly(group = "com.openosrs.rs", name = "runescape-api", version = ProjectVersions.openosrsVersion)
+        compileOnly("com.openosrs:http-api:$openosrsVersion+")
+        compileOnly("com.openosrs:runelite-api:$openosrsVersion+")
+        compileOnly("com.openosrs:runelite-client:$openosrsVersion+")
+        compileOnly("com.openosrs.rs:runescape-api:$openosrsVersion+")
 
-        compileOnly(group = "org.apache.commons", name = "commons-text", version = "1.9")
-        compileOnly(group = "com.google.guava", name = "guava", version = "30.0-jre")
-        compileOnly(group = "com.google.inject", name = "guice", version = "4.2.3", classifier = "no_aop")
-        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.6")
-        compileOnly(group = "net.sf.jopt-simple", name = "jopt-simple", version = "5.0.4")
-        compileOnly(group = "ch.qos.logback", name = "logback-classic", version = "1.2.3")
-        compileOnly(group = "org.projectlombok", name = "lombok", version = "1.18.16")
-        compileOnly(group = "com.squareup.okhttp3", name = "okhttp", version = "4.9.0")
-        compileOnly(group = "org.pf4j", name = "pf4j", version = "3.5.0")
-        compileOnly(group = "io.reactivex.rxjava3", name = "rxjava", version = "3.0.7")
-        compileOnly(group = "org.pushing-pixels", name = "radiance-substance", version = "2.5.1")
+        compileOnly(Libraries.findbugs)
+        compileOnly(Libraries.apacheCommonsText)
+        compileOnly(Libraries.gson)
+        compileOnly(Libraries.guice)
+        compileOnly(Libraries.lombok)
+        compileOnly(Libraries.okhttp3)
+        compileOnly(Libraries.pf4j)
+        compileOnly(Libraries.rxjava)
+
+
     }
 
-    checkstyle {
-        maxWarnings = 0
-        toolVersion = "8.25"
-        isShowViolations = true
-        isIgnoreFailures = false
+    configure<JavaPluginConvention> {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     configure<PublishingExtension> {
@@ -110,14 +98,23 @@ subprojects {
         }
     }
 
-    configure<JavaPluginConvention> {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
     tasks {
         withType<JavaCompile> {
             options.encoding = "UTF-8"
+        }
+
+        register<Copy>("copyDeps") {
+            into("./build/deps/")
+            from(configurations["runtimeClasspath"])
+        }
+
+        withType<Jar> {
+            doLast {
+                copy {
+                    from("./build/libs/")
+                    into(System.getProperty("user.home") + "/.openosrs/plugins")
+                }
+            }
         }
 
         withType<Jar> {
@@ -126,17 +123,9 @@ subprojects {
                     from("./build/libs/")
                     into("../release/")
                 }
-
-                val externalManagerDirectory: String = project.findProperty("externalManagerDirectory")?.toString() ?: System.getProperty("user.home") + "/.openosrs/plugins"
-                val releaseToExternalModules: List<String> = project.findProperty("releaseToExternalmanager")?.toString()?.split(",") ?: emptyList()
-                if (releaseToExternalModules.contains(subprojectName) || releaseToExternalModules.contains("all")) {
-                    copy {
-                        from("./build/libs/")
-                        into(externalManagerDirectory)
-                    }
-                }
             }
         }
+
 
         withType<AbstractArchiveTask> {
             isPreserveFileTimestamps = false
@@ -144,54 +133,6 @@ subprojects {
             dirMode = 493
             fileMode = 420
         }
-
-        withType<Checkstyle> {
-            group = "verification"
-
-            exclude("**/ScriptVarType.java")
-            exclude("**/LayoutSolver.java")
-            exclude("**/RoomType.java")
-        }
-
-        named<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>("dependencyUpdates") {
-            checkForGradleUpdate = false
-
-            resolutionStrategy {
-                componentSelection {
-                    all {
-                        if (candidate.displayName.contains("fernflower") || isNonStable(candidate.version)) {
-                            reject("Non stable")
-                        }
-                    }
-                }
-            }
-        }
-
-        register<Copy>("copyDeps") {
-            into("./build/deps/")
-            from(configurations["runtimeClasspath"])
-        }
     }
-}
 
-tasks {
-    named<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>("dependencyUpdates") {
-        checkForGradleUpdate = false
-
-        resolutionStrategy {
-            componentSelection {
-                all {
-                    if (candidate.displayName.contains("fernflower") || isNonStable(candidate.version)) {
-                        reject("Non stable")
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun isNonStable(version: String): Boolean {
-    return listOf("ALPHA", "BETA", "RC").any {
-        version.toUpperCase().contains(it)
-    }
 }

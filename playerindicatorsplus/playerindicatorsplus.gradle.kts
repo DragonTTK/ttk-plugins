@@ -1,4 +1,4 @@
-version = "1.0.2"
+version = "1.0.3"
 
 project.extra["PluginName"] = "Player Indicators Plus"
 project.extra["PluginDescription"] = "Additional features for PI"

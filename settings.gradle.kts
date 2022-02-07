@@ -23,7 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-rootProject.name = "Mythicals External Plugins"
+rootProject.name = "ttk-plugins"
 
 include(":playerindicatorsplus")
 
