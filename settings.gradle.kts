@@ -25,9 +25,7 @@
 
 rootProject.name = "Mythicals External Plugins"
 
-include(":oneclickagility")
-include(":reflection")
-
+include(":playerindicatorsplus")
 
 for (project in rootProject.children) {
     project.apply {

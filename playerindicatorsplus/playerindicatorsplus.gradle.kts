@@ -1,7 +1,7 @@
-version = "1.0.0"
+version = "1.1.15"
 
 project.extra["PluginName"] = "Player Indicators Plus"
-project.extra["PluginDescription"] = "Additional options for player indications."
+project.extra["PluginDescription"] = "Additional features for PI"
 project.extra["ProjectSupportUrl"] = "https://github.com/DragonTTK/ttk-plugins/"
 
 tasks {
