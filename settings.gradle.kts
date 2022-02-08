@@ -25,7 +25,7 @@
 
 rootProject.name = "ttk-plugins"
 
-include(":playerindicatorsplus")
+include(":disablefakeclaw")
 
 for (project in rootProject.children) {
     project.apply {

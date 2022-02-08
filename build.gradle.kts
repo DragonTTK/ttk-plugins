@@ -35,7 +35,7 @@ allprojects {
 subprojects {
     group = "com.openosrs.externals"
 
-    project.extra["PluginProvider"] = "DragonTTK"
+    project.extra["PluginProvider"] = "MythicalZxc"
     project.extra["ProjectSupportUrl"] = "https://discord.com/invite/6j5gbekPjA"
     project.extra["PluginLicense"] = "3-Clause BSD License"
 
