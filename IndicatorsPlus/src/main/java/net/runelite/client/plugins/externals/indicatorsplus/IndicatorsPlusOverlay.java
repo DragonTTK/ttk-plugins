@@ -44,7 +44,7 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 @Singleton
 public class IndicatorsPlusOverlay extends Overlay
 {
-	private static final int ACTOR_OVERHEAD_TEXT_MARGIN = 40;
+	private static final int ACTOR_OVERHEAD_TEXT_MARGIN = 20; // 40
 	private static final int ACTOR_HORIZONTAL_TEXT_MARGIN = 10;
 
 	private final IndicatorsPlusService playerIndicatorsService;
@@ -89,7 +89,7 @@ public class IndicatorsPlusOverlay extends Overlay
 		}
 
 		//final String name = Text.sanitize(actor.getName());
-		Point textLocation = actor.getCanvasTextLocation(graphics, "Level: " + actor.getCombatLevel(), zOffset);
+		Point textLocation = actor.getCanvasTextLocation(graphics, "Lvl: " + actor.getCombatLevel(), zOffset);
 
 		if (drawPlayerNamesConfig == PlayerNameLocation.MODEL_RIGHT)
 		{
@@ -109,24 +109,6 @@ public class IndicatorsPlusOverlay extends Overlay
 		}
 
 		BufferedImage rankImage = null;
-		if (actor.isFriendsChatMember() && config.highlightFriendsChat() && config.showFriendsChatRanks())
-		{
-			final FriendsChatRank rank = playerIndicatorsService.getFriendsChatRank(actor);
-
-			if (rank != FriendsChatRank.UNRANKED)
-			{
-				rankImage = chatIconManager.getRankImage(rank);
-			}
-		}
-		else if (actor.isClanMember() && config.highlightClanMembers() && config.showClanChatRanks())
-		{
-			ClanTitle clanTitle = playerIndicatorsService.getClanTitle(actor);
-			if (clanTitle != null)
-			{
-				rankImage = chatIconManager.getRankImage(clanTitle);
-			}
-		}
-
 		if (rankImage != null)
 		{
 			final int imageWidth = rankImage.getWidth();
@@ -152,6 +134,6 @@ public class IndicatorsPlusOverlay extends Overlay
 			textLocation = new Point(textLocation.getX() + imageTextMargin, textLocation.getY());
 		}
 
-		OverlayUtil.renderTextLocation(graphics, textLocation, "Level: " + actor.getCombatLevel(), color);
+		OverlayUtil.renderTextLocation(graphics, textLocation, "Lvl: " + actor.getCombatLevel(), color);
 	}
 }

@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2018, SomeoneWithAnInternetConnection
- * Copyright (c) 2018, oplosthee <https://github.com/oplosthee>
+ * Copyright (c) 2018, DragonTTK <https://github.com/dragonttk>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +63,7 @@ public class AutoAttackZxcPlugin extends Plugin {
     private Client client;
 
     Player player;
+    LegacyMenuEntry targetMenu;
     public boolean startBot;
 
     @Provides
@@ -159,6 +159,12 @@ public class AutoAttackZxcPlugin extends Plugin {
                 return;
             }
         }
+    }
+    private void attackNPC(Player player) {
+        //targetMenu = new LegacyMenuEntry("", "", player.getIndex(), MenuAction.NPC_SECOND_OPTION.getId(), 0, 0, false);
+
+        //utils.doActionMsTime(targetMenu, currentNPC.getConvexHull().getBounds(), sleepDelay());
+        //timeout = 2 + tickDelay();
     }
 
     private void setSelectSpell(WidgetInfo info)

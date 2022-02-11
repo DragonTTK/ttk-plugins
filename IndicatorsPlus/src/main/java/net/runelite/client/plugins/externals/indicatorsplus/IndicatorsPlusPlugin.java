@@ -47,7 +47,6 @@ import static net.runelite.api.MenuAction.SPELL_CAST_ON_PLAYER;
 import static net.runelite.api.MenuAction.WALK;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
-import net.runelite.api.clan.ClanTitle;
 import net.runelite.api.events.ClientTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -179,45 +178,10 @@ public class IndicatorsPlusPlugin extends Plugin
 		int image = -1;
 		Color color = null;
 
-		if (player.isFriend() && config.highlightFriends())
-		{
-			color = config.getFriendColor();
-		}
-		else if (player.isFriendsChatMember() && config.highlightFriendsChat())
-		{
-			color = config.getFriendsChatMemberColor();
-
-			if (config.showFriendsChatRanks())
-			{
-				FriendsChatRank rank = playerIndicatorsService.getFriendsChatRank(player);
-				if (rank != UNRANKED)
-				{
-					image = chatIconManager.getIconNumber(rank);
-				}
-			}
-		}
-		else if (player.getTeam() > 0 && client.getLocalPlayer().getTeam() == player.getTeam() && config.highlightTeamMembers())
-		{
-			color = config.getTeamMemberColor();
-		}
-		else if (player.isClanMember() && config.highlightClanMembers())
-		{
-			color = config.getClanMemberColor();
-
-			if (config.showClanChatRanks())
-			{
-				ClanTitle clanTitle = playerIndicatorsService.getClanTitle(player);
-				if (clanTitle != null)
-				{
-					image = chatIconManager.getIconNumber(clanTitle);
-				}
-			}
-		}
-		else if (!player.isFriendsChatMember() && !player.isClanMember() && config.highlightOthers())
+		if (config.highlightOthers())
 		{
 			color = config.getOthersColor();
 		}
-
 		if (image == -1 && color == null)
 		{
 			return null;

@@ -55,9 +55,7 @@ public class IndicatorsPlusService
 
 	public void forEachPlayer(final BiConsumer<Player, Color> consumer)
 	{
-		if (!config.highlightOwnPlayer() && !config.highlightFriendsChat()
-			&& !config.highlightFriends() && !config.highlightOthers()
-			&& !config.highlightClanMembers())
+		if (!config.highlightOthers())
 		{
 			return;
 		}
@@ -74,30 +72,7 @@ public class IndicatorsPlusService
 			boolean isFriendsChatMember = player.isFriendsChatMember();
 			boolean isClanMember = player.isClanMember();
 
-			if (player == localPlayer)
-			{
-				if (config.highlightOwnPlayer())
-				{
-					consumer.accept(player, config.getOwnPlayerColor());
-				}
-			}
-			else if (config.highlightFriends() && player.isFriend())
-			{
-				consumer.accept(player, config.getFriendColor());
-			}
-			else if (config.highlightFriendsChat() && isFriendsChatMember)
-			{
-				consumer.accept(player, config.getFriendsChatMemberColor());
-			}
-			else if (config.highlightTeamMembers() && localPlayer.getTeam() > 0 && localPlayer.getTeam() == player.getTeam())
-			{
-				consumer.accept(player, config.getTeamMemberColor());
-			}
-			else if (config.highlightClanMembers() && isClanMember)
-			{
-				consumer.accept(player, config.getClanMemberColor());
-			}
-			else if (config.highlightOthers() && !isFriendsChatMember && !isClanMember)
+			if (config.highlightOthers() && !isFriendsChatMember && !isClanMember)
 			{
 				consumer.accept(player, config.getOthersColor());
 			}
