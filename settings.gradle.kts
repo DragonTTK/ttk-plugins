@@ -25,8 +25,11 @@
 
 rootProject.name = "ttk-plugins"
 
-include(":disablefakeclaw")
+include(":iutils")
+include(":AutoAttackZxc")
+include(":IndicatorsPlus")
 include(":LeftClickCast")
+//include(":chinbreakhandler")
 
 for (project in rootProject.children) {
     project.apply {

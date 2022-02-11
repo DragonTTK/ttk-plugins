@@ -62,11 +62,14 @@ subprojects {
     dependencies {
         annotationProcessor(Libraries.lombok)
         annotationProcessor(Libraries.pf4j)
+        annotationProcessor(Libraries.javax)
 
         compileOnly("com.openosrs:http-api:$openosrsVersion+")
         compileOnly("com.openosrs:runelite-api:$openosrsVersion+")
         compileOnly("com.openosrs:runelite-client:$openosrsVersion+")
         compileOnly("com.openosrs.rs:runescape-api:$openosrsVersion+")
+
+        //compileOnly(group = "com.owain.externals", name = "chinbreakhandler", version = "0.0.2+")
 
         compileOnly(Libraries.findbugs)
         compileOnly(Libraries.apacheCommonsText)
@@ -75,9 +78,8 @@ subprojects {
         compileOnly(Libraries.lombok)
         compileOnly(Libraries.okhttp3)
         compileOnly(Libraries.pf4j)
-        //compileOnly(Libraries.rxjava)
-
-
+        compileOnly(Libraries.rxjava)
+        compileOnly(Libraries.javax)
     }
 
     configure<JavaPluginConvention> {

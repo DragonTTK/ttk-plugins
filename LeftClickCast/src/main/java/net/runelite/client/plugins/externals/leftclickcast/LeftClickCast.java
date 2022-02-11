@@ -11,7 +11,6 @@ import com.openosrs.client.util.WeaponStyle;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.SwingUtilities;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +39,6 @@ import net.runelite.client.game.ChatIconManager;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.PluginManager;
-import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.PvPUtil;
 import org.pf4j.Extension;
@@ -78,8 +75,6 @@ public class LeftClickCast extends Plugin
 
 	private boolean isMage;
 	private Spells currentSpell = Spells.ICE_BARRAGE;
-
-	private PluginManager pluginManager;
 
 	private final HotkeyListener spellOneSwap = new HotkeyListener(() -> config.spellOneSwap())
 	{
