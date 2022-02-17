@@ -66,9 +66,6 @@ public class AutoAttackZxcPlugin extends iScript {
     private AutoAttackZxcConfig config;
 
     @Inject
-    private ConfigManager configManager;
-
-    @Inject
     private iUtils utils;
 
     @Inject
@@ -79,8 +76,10 @@ public class AutoAttackZxcPlugin extends iScript {
 
     LegacyMenuEntry targetMenu;
     private int actionsThisTick;
+    Spells curSpell;
     Instant botTimer;
     long sleepLength;
+    boolean stopAttack;
 
     @Provides
     AutoAttackZxcConfig provideConfig(ConfigManager configManager) {
@@ -99,10 +98,12 @@ public class AutoAttackZxcPlugin extends iScript {
 
     @Override
     public void onStart() {
-        log.info("Starting AutoAttackZxc");
+        log.info("Started AutoAttack");
 
         if (client != null && game.localPlayer() != null && client.getGameState() == GameState.LOGGED_IN) {
             botTimer = Instant.now();
+            curSpell = config.selectedSpell();
+            stopAttack = false;
         } else {
             log.info("Start logged in!");
             stop();
@@ -111,22 +112,31 @@ public class AutoAttackZxcPlugin extends iScript {
 
     @Override
     public void onStop() {
-        log.info("Stopping AutoAttackZxc");
+        log.info("Stopped AutoAttack");
         botTimer = null;
-        Spells currentSpell = null;
+        curSpell = null;
+        stopAttack = true;
     }
 
     @Subscribe
     private void onGameTick(GameTick event) {
         actionsThisTick = 0;
 
-        //targetMenu = new LegacyMenuEntry("", "", p.getPlayerId(), MenuAction.PLAYER_FIRST_OPTION.getId(),0, 0, false);
-        //utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+        List<Player> players = client.getPlayers();
+        for (Player p : players) {
+            if (isPlayerKillable(p) && !stopAttack) {
+                    targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", p.getPlayerId(), SPELL_CAST_ON_PLAYER,
+                            0, 0, true);
+
+                utils.doActionMsTime(targetMenu, p.getConvexHull().getBounds(), sleepDelay());
+                stop();
+            }
+        }
     }
 
     @Override
     protected void loop() {
-
+        setSelectSpell(curSpell.getSpell());
     }
 
     @Subscribe
@@ -144,7 +154,7 @@ public class AutoAttackZxcPlugin extends iScript {
         }
     }
 
-    @Subscribe
+    /*@Subscribe
     public void onMenuEntryAdded(MenuEntryAdded event)
     {
         if (client.isMenuOpen())
@@ -156,8 +166,8 @@ public class AutoAttackZxcPlugin extends iScript {
             return;
         }
         if (event.getType() == MenuAction.PLAYER_SECOND_OPTION.getId()) {
-            Spells currentSpell = config.selectedSpell();
-            setSelectSpell(currentSpell.getSpell());
+            curSpell = config.selectedSpell();
+            setSelectSpell(curSpell.getSpell());
             client.createMenuEntry(-1)
                     .setOption("Cast " + client.getSelectedSpellName() + " -> ")
                     .setTarget(event.getTarget())
@@ -167,29 +177,22 @@ public class AutoAttackZxcPlugin extends iScript {
                     .setParam1(0)
                     .setForceLeftClick(true);
         }
-    }
+    }*/
+
     private long sleepDelay() {
         sleepLength = calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
         return calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
     }
     @Subscribe
     public void onPlayerSpawned(PlayerSpawned event) {
-        if (isPlayerKillable(event.getPlayer()))
+        if (isPlayerKillable(event.getPlayer()) && !stopAttack) {
             targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", event.getPlayer().getPlayerId(), SPELL_CAST_ON_PLAYER,
-                    0, 0, false);
+                    0, 0, true);
 
             utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+            stop();
             //selectTarget();
-    }
-
-    private boolean nearPlayer() {
-        List<Player> players = client.getPlayers();
-        for (Player p : players) {
-            if (!isPlayerKillable(p))
-                continue;
-            return true;
         }
-        return false;
     }
 
     public boolean isPlayerKillable(Player player) {
