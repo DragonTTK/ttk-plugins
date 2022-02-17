@@ -36,7 +36,7 @@ subprojects {
     group = "com.openosrs.externals"
 
     project.extra["PluginProvider"] = "MythicalZxc"
-    project.extra["ProjectSupportUrl"] = "https://discord.com/invite/6j5gbekPjA"
+    project.extra["ProjectSupportUrl"] = "https://discord.gg/43tWFmWQ8X"
     project.extra["PluginLicense"] = "3-Clause BSD License"
 
     repositories {

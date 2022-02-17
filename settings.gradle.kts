@@ -25,8 +25,8 @@
 
 rootProject.name = "ttk-plugins"
 
-//include(":iutils")
-//include(":AutoAttackZxc")
+include(":iutils")
+include(":AutoAttackZxc")
 include(":IndicatorsPlus")
 include(":LeftClickCast")
 //include(":chinbreakhandler")

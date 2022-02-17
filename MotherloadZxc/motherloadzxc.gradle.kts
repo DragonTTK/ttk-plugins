@@ -26,27 +26,13 @@
 
 version = "1.0.0"
 
-project.extra["PluginName"] = "Auto Attack"
-project.extra["PluginDescription"] = "MythicalZxc - Automatically barrage/teleblock players when you login."
+project.extra["PluginName"] = "Motherload Zxc"
+project.extra["PluginDescription"] = "Start inside motherload mine with pickaxe equipped."
 
 dependencies {
     compileOnly(project(":iutils"))
 }
-tasks {
-    jar {
-        manifest {
-            attributes(mapOf(
-                "Plugin-Version" to project.version,
-                "Plugin-Id" to nameToId(project.extra["PluginName"] as String),
-                "Plugin-Provider" to project.extra["PluginProvider"],
-                "Plugin-Dependencies" to arrayOf(nameToId("iUtils")).joinToString(),
-                "Plugin-Description" to project.extra["PluginDescription"],
-                "Plugin-License" to project.extra["PluginLicense"]
-            ))
-        }
-    }
-}
-/*
+
 tasks {
     jar {
         manifest {
@@ -61,4 +47,3 @@ tasks {
         }
     }
 }
-*/

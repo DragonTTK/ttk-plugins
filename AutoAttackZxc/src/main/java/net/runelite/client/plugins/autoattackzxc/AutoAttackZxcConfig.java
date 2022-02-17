@@ -27,10 +27,12 @@ package net.runelite.client.plugins.autoattackzxc;
 import net.runelite.client.config.*;
 
 @ConfigGroup("AutoAttackZxc")
-public interface AutoAttackZxcConfiguration extends Config {
+public interface AutoAttackZxcConfig extends Config {
 
     String spells = "Spells";
+    String targets = "Targets";
 
+    /*
     @ConfigItem(
             keyName = "quickPrayers",
             name = "Enable quick prayers",
@@ -44,6 +46,17 @@ public interface AutoAttackZxcConfiguration extends Config {
     }
 
     @ConfigItem(
+            keyName = "tickDelay",
+            name = "Allow tick delays",
+            description = "This will allow the plugin to wait a random configurable amount of ticks between " +
+                    "auto attacking. This will be slower but potentially less detectable. Tick delay options" +
+                    "can be configured in iUtils config"
+    )
+    default boolean tickDelay() {
+        return true;
+    }*/
+
+    @ConfigItem(
             keyName = "selectedSpell",
             name = "Select spell",
             description = "Select the spell you want to use on login.",
@@ -54,9 +67,7 @@ public interface AutoAttackZxcConfiguration extends Config {
     {
         return Spells.TELE_BLOCK;
     }
-
-    String targets = "Targets";
-
+    /*
     @ConfigItem(
             keyName = "selectedTarget",
             name = "Select target",
@@ -68,14 +79,86 @@ public interface AutoAttackZxcConfiguration extends Config {
     {
         return Targets.DISTANCE_TO_PLAYER;
     }
+    */
+
+    @ConfigSection(
+            keyName = "delayConfig",
+            name = "Sleep Delay Configuration",
+            description = "Configure how the bot handles sleep delays",
+            closedByDefault = true,
+            position = 0
+    )
+    String delayConfig = "delayConfig";
+
+    @Range(
+            min = 0,
+            max = 550
+    )
+    @ConfigItem(
+            keyName = "sleepMin",
+            name = "Sleep Min",
+            description = "",
+            position = 1,
+            section = "delayConfig"
+    )
+    default int sleepMin() {
+        return 60;
+    }
+
+    @Range(
+            min = 0,
+            max = 550
+    )
+    @ConfigItem(
+            keyName = "sleepMax",
+            name = "Sleep Max",
+            description = "",
+            position = 2,
+            section = "delayConfig"
+    )
+    default int sleepMax() {
+        return 350;
+    }
+
+    @Range(
+            min = 0,
+            max = 550
+    )
+    @ConfigItem(
+            keyName = "sleepTarget",
+            name = "Sleep Target",
+            description = "",
+            position = 3,
+            section = "delayConfig"
+    )
+    default int sleepTarget() {
+        return 100;
+    }
+
+    @Range(
+            min = 0,
+            max = 550
+    )
+    @ConfigItem(
+            keyName = "sleepDeviation",
+            name = "Sleep Deviation",
+            description = "",
+            position = 4,
+            section = "delayConfig"
+    )
+    default int sleepDeviation() {
+        return 10;
+    }
 
     @ConfigItem(
-            keyName = "startButton",
-            name = "Start/Stop",
-            description = "Start or stop plugin.",
-            position = 33
+            keyName = "sleepWeightedDistribution",
+            name = "Sleep Weighted Distribution",
+            description = "Shifts the random distribution towards the lower end at the target, otherwise it will be an even distribution",
+            position = 5,
+            section = "delayConfig"
     )
-    default Button startButton() {
-        return new Button();
+    default boolean sleepWeightedDistribution() {
+        return false;
     }
+
 }

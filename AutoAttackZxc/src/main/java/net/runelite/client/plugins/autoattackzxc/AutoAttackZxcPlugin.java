@@ -32,29 +32,41 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.iutils.*;
 import org.pf4j.Extension;
-
 import javax.inject.Inject;
-
 import static net.runelite.api.MenuAction.SPELL_CAST_ON_PLAYER;
+import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.MenuAction;
+import net.runelite.client.util.PvPUtil;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.client.plugins.iutils.*;
+import net.runelite.client.plugins.iutils.iUtils;
+import net.runelite.client.plugins.iutils.scripts.iScript;
+import java.time.Instant;
+import java.util.List;
+
 
 @Extension
 @PluginDependency(iUtils.class)
 @PluginDescriptor(
-        name = "Auto Attack Zxc",
+        name = "Auto Attack",
         enabledByDefault = false,
         description = "MythicalZxc - Automatically casts spell on login.",
         tags = {"mythical", "dragonttk", "auto", "bot", "autoattack", "auto attack"}
 )
 @Slf4j
-public class AutoAttackZxcPlugin extends Plugin {
+public class AutoAttackZxcPlugin extends iScript {
 
     @Inject
-    private AutoAttackZxcConfiguration config;
+    private AutoAttackZxcConfig config;
+
+    @Inject
+    private ConfigManager configManager;
 
     @Inject
     private iUtils utils;
@@ -62,24 +74,74 @@ public class AutoAttackZxcPlugin extends Plugin {
     @Inject
     private Client client;
 
-    Player player;
+    @Inject
+    private CalculationUtils calc;
+
     LegacyMenuEntry targetMenu;
-    public boolean startBot;
+    private int actionsThisTick;
+    Instant botTimer;
+    long sleepLength;
 
     @Provides
-    AutoAttackZxcConfiguration provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(AutoAttackZxcConfiguration.class);
+    AutoAttackZxcConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(AutoAttackZxcConfig.class);
     }
 
     @Override
     protected void startUp() {
-        //chinBreakHandler.registerPlugin(this);
+        start();
     }
 
     @Override
     protected void shutDown() {
-        stopPlugin();
-        //chinBreakHandler.unregisterPlugin(this);
+        stop();
+    }
+
+    @Override
+    public void onStart() {
+        log.info("Starting AutoAttackZxc");
+
+        if (client != null && game.localPlayer() != null && client.getGameState() == GameState.LOGGED_IN) {
+            botTimer = Instant.now();
+        } else {
+            log.info("Start logged in!");
+            stop();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        log.info("Stopping AutoAttackZxc");
+        botTimer = null;
+        Spells currentSpell = null;
+    }
+
+    @Subscribe
+    private void onGameTick(GameTick event) {
+        actionsThisTick = 0;
+
+        //targetMenu = new LegacyMenuEntry("", "", p.getPlayerId(), MenuAction.PLAYER_FIRST_OPTION.getId(),0, 0, false);
+        //utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+    }
+
+    @Override
+    protected void loop() {
+
+    }
+
+    @Subscribe
+    private void onChatMessage(ChatMessage event) {
+        final String msg = event.getMessage();
+
+        /*if (event.getType() == ChatMessageType.ENGINE) {
+            utils.sendGameMessage("Casted spell.");
+            stop();
+        }*/
+        if (event.getType() == ChatMessageType.ENGINE && (msg.contains("I can't reach that"))) {
+            log.info("Failed to reach target too many times, stopping");
+            utils.sendGameMessage("Couldn't reach target stopping.");
+            stop();
+        }
     }
 
     @Subscribe
@@ -89,83 +151,91 @@ public class AutoAttackZxcPlugin extends Plugin {
         {
             return;
         }
-
         if (event.isForceLeftClick())
         {
             return;
         }
-        if (startBot) {
-            if (event.getType() == MenuAction.PLAYER_SECOND_OPTION.getId()) {
-                Spells currentSpell = config.selectedSpell();
-                setSelectSpell(currentSpell.getSpell());
-                client.createMenuEntry(-1)
-                        .setOption("Cast " + client.getSelectedSpellName() + " -> ")
-                        .setTarget(event.getTarget())
-                        .setType(SPELL_CAST_ON_PLAYER)
-                        .setIdentifier(event.getIdentifier())
-                        .setParam0(0)
-                        .setParam1(0)
-                        .setForceLeftClick(true);
+        if (event.getType() == MenuAction.PLAYER_SECOND_OPTION.getId()) {
+            Spells currentSpell = config.selectedSpell();
+            setSelectSpell(currentSpell.getSpell());
+            client.createMenuEntry(-1)
+                    .setOption("Cast " + client.getSelectedSpellName() + " -> ")
+                    .setTarget(event.getTarget())
+                    .setType(SPELL_CAST_ON_PLAYER)
+                    .setIdentifier(event.getIdentifier())
+                    .setParam0(0)
+                    .setParam1(0)
+                    .setForceLeftClick(true);
+        }
+    }
+    private long sleepDelay() {
+        sleepLength = calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
+        return calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
+    }
+    @Subscribe
+    public void onPlayerSpawned(PlayerSpawned event) {
+        if (isPlayerKillable(event.getPlayer()))
+            targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", event.getPlayer().getPlayerId(), SPELL_CAST_ON_PLAYER,
+                    0, 0, false);
+
+            utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+            //selectTarget();
+    }
+
+    private boolean nearPlayer() {
+        List<Player> players = client.getPlayers();
+        for (Player p : players) {
+            if (!isPlayerKillable(p))
+                continue;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isPlayerKillable(Player player) {
+        if (player == client.getLocalPlayer())
+            return false;
+
+        if (!PvPUtil.isAttackable(client, player))
+            return false;
+
+        //if (!isPlayerSkulled(player))
+        //return false;
+
+        if (!inWilderness())
+            return false;
+
+        return true;
+    }
+
+    public boolean inWilderness() {
+        return client.getVar(Varbits.IN_WILDERNESS) == 1;
+    }
+
+    private boolean isPlayerSkulled(Player player) {
+        if (player == null) {
+            return false;
+        }
+
+        return player.getSkullIcon() == SkullIcon.SKULL;
+    }
+
+    /*private void selectTarget() {
+        if(config.selectedTarget() == Targets.DISTANCE_TO_PLAYER && nearPlayer()) {
+            targetMenu = new LegacyMenuEntry("", "", targetNPC.getIndex(), opcode, 0, 0, false);
+            utils.doActionMsTime(targetMenu, targetNPC.getConvexHull().getBounds(), random(250));
+        }
+        if(config.selectedTarget() == Targets.SKULLED) {
+            if(player.getSkullIcon() != null && player.getSkullIcon() == SkullIcon.SKULL && nearPlayer()) {
+
+            } else {
+                // no skulled players nearby attack by distance now.
             }
         }
-    }
-
-    @Subscribe
-    private void onConfigButtonPressed(ConfigButtonClicked configButtonClicked) {
-        if (!configButtonClicked.getGroup().equalsIgnoreCase("AutoAttackZxc")) {
-            return;
-        }
-        log.info("button {} pressed!", configButtonClicked.getKey());
-        switch (configButtonClicked.getKey()) {
-            case "startButton":
-                if (!startBot) {
-                    startBot = true;
-                    //chinBreakHandler.startPlugin(this);
-                    startPlugin();
-                } else {
-                    stopPlugin();
-                }
-                break;
-        }
-    }
-
-    private void stopPlugin() {
-        log.debug("Stopping auto attack zxc.");
-        //chinBreakHandler.stopPlugin(this);
-        startBot = false;
-        Spells currentSpell = null;
-    }
-
-    private void startPlugin() {
-        log.debug("Starting auto attack zxc.");
-        if (client == null || client.getLocalPlayer() == null || client.getGameState() != GameState.LOGGED_IN) {
-            log.info("startup failed, log in before starting");
-            return;
-        }
-        //chinBreakHandler.startPlugin(this);
-        startBot = true;
-    }
-
-    @Subscribe
-    private void onGameTick(GameTick tick) {
-        if (!startBot /*|| chinBreakHandler.isBreakActive(this)*/) {
-            return;
-        }
-        player = client.getLocalPlayer();
-        if (client != null && player != null && client.getGameState() == GameState.LOGGED_IN) {
-            if (!client.isResized()) {
-                utils.sendGameMessage("Please set client to resizeable.");
-                startBot = false;
-                return;
-            }
-        }
-    }
-    private void attackNPC(Player player) {
-        //targetMenu = new LegacyMenuEntry("", "", player.getIndex(), MenuAction.NPC_SECOND_OPTION.getId(), 0, 0, false);
-
-        //utils.doActionMsTime(targetMenu, currentNPC.getConvexHull().getBounds(), sleepDelay());
-        //timeout = 2 + tickDelay();
-    }
+        //if(config.selectedTarget() == Targets.WEALTH) {
+            // check wealth if selected
+        //}
+    }*/
 
     private void setSelectSpell(WidgetInfo info)
     {
