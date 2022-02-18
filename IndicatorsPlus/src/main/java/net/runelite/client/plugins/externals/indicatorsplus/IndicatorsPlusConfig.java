@@ -49,7 +49,7 @@ public interface IndicatorsPlusConfig extends Config
 	)
 	default boolean highlightOthers()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(

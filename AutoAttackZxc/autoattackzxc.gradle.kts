@@ -24,7 +24,7 @@
  */
 
 
-version = "1.0.1"
+version = "1.0.2"
 
 project.extra["PluginName"] = "Auto Attack"
 project.extra["PluginDescription"] = "MythicalZxc - Automatically barrage/teleblock players when you login."

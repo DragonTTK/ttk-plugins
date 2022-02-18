@@ -31,14 +31,15 @@ public interface AutoAttackZxcConfig extends Config {
 
     String spells = "Spells";
     String targets = "Targets";
+    String hotkeys = "Hotkeys";
 
-    /*
     @ConfigItem(
             keyName = "quickPrayers",
             name = "Enable quick prayers",
             description = "Enables your set quick prayers.",
-            position = 1,
-            section = "quickPrayer"
+            position = 9,
+            section = "quickPrayer",
+            hidden = true
 
     )
     default boolean quickPrayers() {
@@ -46,40 +47,62 @@ public interface AutoAttackZxcConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "tickDelay",
-            name = "Allow tick delays",
-            description = "This will allow the plugin to wait a random configurable amount of ticks between " +
-                    "auto attacking. This will be slower but potentially less detectable. Tick delay options" +
-                    "can be configured in iUtils config"
-    )
-    default boolean tickDelay() {
-        return true;
-    }*/
-
-    @ConfigItem(
             keyName = "selectedSpell",
             name = "Select spell",
             description = "Select the spell you want to use on login.",
-            position = 2,
+            position = 6,
             section = spells
     )
     default Spells selectedSpell()
     {
         return Spells.TELE_BLOCK;
     }
-    /*
     @ConfigItem(
             keyName = "selectedTarget",
             name = "Select target",
             description = "Select priority who do we target first on login.",
-            position = 3,
-            section = targets
+            position = 7,
+            section = targets,
+            hidden = true
     )
     default Targets selectedTarget()
     {
         return Targets.DISTANCE_TO_PLAYER;
     }
-    */
+
+    @ConfigItem(
+            position = 8,
+            keyName = "enableMaxLevel",
+            name = "Enable max level",
+            description = "Enable this and enter value below for max level you want to attack."
+            //hidden = true,
+    )
+    default boolean enableMaxLevel()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "maxLevel",
+            name = "Max Level",
+            description = "Highest level you want to attack.",
+            position = 9
+    )
+    default int maxLevel() {
+        return 126;
+    }
+
+    @ConfigItem(
+            keyName = "StartAutoAttack",
+            name = "Start/Stop AutoAttack",
+            description = "Set hotkey to start plugin you must press each time after you attack.",
+            position = 4,
+            section = hotkeys
+    )
+    default Keybind StartAutoAttack()
+    {
+        return Keybind.NOT_SET;
+    }
 
     @ConfigSection(
             keyName = "delayConfig",

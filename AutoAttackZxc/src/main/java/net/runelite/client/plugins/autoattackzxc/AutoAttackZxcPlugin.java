@@ -32,19 +32,19 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.iutils.*;
+import net.runelite.client.util.HotkeyListener;
 import org.pf4j.Extension;
 import javax.inject.Inject;
 import static net.runelite.api.MenuAction.SPELL_CAST_ON_PLAYER;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.MenuAction;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.util.PvPUtil;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.MenuEntryAdded;
-import net.runelite.client.plugins.iutils.*;
 import net.runelite.client.plugins.iutils.iUtils;
 import net.runelite.client.plugins.iutils.scripts.iScript;
 import java.time.Instant;
@@ -57,7 +57,7 @@ import java.util.List;
         name = "Auto Attack",
         enabledByDefault = false,
         description = "MythicalZxc - Automatically casts spell on login.",
-        tags = {"mythical", "dragonttk", "auto", "bot", "autoattack", "auto attack"}
+        tags = {"mythical", "pk", "pvp", "dragonttk", "auto", "bot", "autoattack", "auto attack"}
 )
 @Slf4j
 public class AutoAttackZxcPlugin extends iScript {
@@ -74,8 +74,10 @@ public class AutoAttackZxcPlugin extends iScript {
     @Inject
     private CalculationUtils calc;
 
+    @Inject
+    private KeyManager keyManager;
+
     LegacyMenuEntry targetMenu;
-    private int actionsThisTick;
     Spells curSpell;
     Instant botTimer;
     long sleepLength;
@@ -86,14 +88,25 @@ public class AutoAttackZxcPlugin extends iScript {
         return configManager.getConfig(AutoAttackZxcConfig.class);
     }
 
+    private final HotkeyListener StartAutoAttack = new HotkeyListener(() -> config.StartAutoAttack())
+    {
+        @Override
+        public void hotkeyPressed()
+        {
+            start();
+        }
+    };
+
     @Override
     protected void startUp() {
         start();
+        keyManager.registerKeyListener(StartAutoAttack);
     }
 
     @Override
     protected void shutDown() {
         stop();
+        keyManager.unregisterKeyListener(StartAutoAttack);
     }
 
     @Override
@@ -119,17 +132,39 @@ public class AutoAttackZxcPlugin extends iScript {
     }
 
     @Subscribe
-    private void onGameTick(GameTick event) {
-        actionsThisTick = 0;
+    public void onGameStateChanged(GameStateChanged event)
+    {
+        if (event.getGameState() != GameState.LOGGED_IN)
+        {
+            keyManager.unregisterKeyListener(StartAutoAttack);
+            return;
+        }
+        keyManager.registerKeyListener(StartAutoAttack);
+    }
 
+    @Subscribe
+    private void onGameTick(GameTick event) {
         List<Player> players = client.getPlayers();
         for (Player p : players) {
-            if (isPlayerKillable(p) && !stopAttack) {
+            if (canAttackPlayer(p) && !stopAttack) {
+                if(config.enableMaxLevel()) {
+                    log.info("AutoAttack - OnGameTick Level check enabled.");
+                    if (p.getCombatLevel() <= config.maxLevel()) {
+                        log.info("AutoAttack - OnGameTick Attack 1");
+                        targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", p.getPlayerId(), SPELL_CAST_ON_PLAYER,
+                                0, 0, true);
+
+                        utils.doActionMsTime(targetMenu, p.getConvexHull().getBounds(), sleepDelay());
+                        stop();
+                    }
+                } else {
+                    log.info("AutoAttack - OnGameTick Attack 2 (No Level check)");
                     targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", p.getPlayerId(), SPELL_CAST_ON_PLAYER,
                             0, 0, true);
 
-                utils.doActionMsTime(targetMenu, p.getConvexHull().getBounds(), sleepDelay());
-                stop();
+                    utils.doActionMsTime(targetMenu, p.getConvexHull().getBounds(), sleepDelay());
+                    stop();
+                }
             }
         }
     }
@@ -143,10 +178,6 @@ public class AutoAttackZxcPlugin extends iScript {
     private void onChatMessage(ChatMessage event) {
         final String msg = event.getMessage();
 
-        /*if (event.getType() == ChatMessageType.ENGINE) {
-            utils.sendGameMessage("Casted spell.");
-            stop();
-        }*/
         if (event.getType() == ChatMessageType.ENGINE && (msg.contains("I can't reach that"))) {
             log.info("Failed to reach target too many times, stopping");
             utils.sendGameMessage("Couldn't reach target stopping.");
@@ -154,61 +185,43 @@ public class AutoAttackZxcPlugin extends iScript {
         }
     }
 
-    /*@Subscribe
-    public void onMenuEntryAdded(MenuEntryAdded event)
-    {
-        if (client.isMenuOpen())
-        {
-            return;
-        }
-        if (event.isForceLeftClick())
-        {
-            return;
-        }
-        if (event.getType() == MenuAction.PLAYER_SECOND_OPTION.getId()) {
-            curSpell = config.selectedSpell();
-            setSelectSpell(curSpell.getSpell());
-            client.createMenuEntry(-1)
-                    .setOption("Cast " + client.getSelectedSpellName() + " -> ")
-                    .setTarget(event.getTarget())
-                    .setType(SPELL_CAST_ON_PLAYER)
-                    .setIdentifier(event.getIdentifier())
-                    .setParam0(0)
-                    .setParam1(0)
-                    .setForceLeftClick(true);
-        }
-    }*/
-
     private long sleepDelay() {
         sleepLength = calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
         return calc.randomDelay(config.sleepWeightedDistribution(), config.sleepMin(), config.sleepMax(), config.sleepDeviation(), config.sleepTarget());
     }
+
     @Subscribe
     public void onPlayerSpawned(PlayerSpawned event) {
-        if (isPlayerKillable(event.getPlayer()) && !stopAttack) {
-            targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", event.getPlayer().getPlayerId(), SPELL_CAST_ON_PLAYER,
-                    0, 0, true);
+            if (canAttackPlayer(event.getPlayer()) && !stopAttack) {
+                if(config.enableMaxLevel()) {
+                    log.info("AutoAttack - onPlayerSpawned Level check enabled.");
+                    if (event.getPlayer().getCombatLevel() <= config.maxLevel()) {
+                        log.info("AutoAttack - onPlayerSpawned Attack 1");
+                        targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", event.getPlayer().getPlayerId(), SPELL_CAST_ON_PLAYER,
+                                0, 0, true);
 
-            utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
-            stop();
-            //selectTarget();
+                        utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+                        stop();
+                    }
+                } else {
+                    log.info("AutoAttack - onPlayerSpawned Attack 2 (No Level check)");
+                    targetMenu = new LegacyMenuEntry("Cast " + client.getSelectedSpellName() + " -> ", "", event.getPlayer().getPlayerId(), SPELL_CAST_ON_PLAYER,
+                            0, 0, true);
+
+                    utils.doActionMsTime(targetMenu, event.getPlayer().getConvexHull().getBounds(), sleepDelay());
+                    stop();
+                }
+                }
         }
-    }
 
-    public boolean isPlayerKillable(Player player) {
-        if (player == client.getLocalPlayer())
-            return false;
-
-        if (!PvPUtil.isAttackable(client, player))
-            return false;
-
-        //if (!isPlayerSkulled(player))
-        //return false;
-
-        if (!inWilderness())
-            return false;
-
-        return true;
+    public boolean canAttackPlayer(Player player) {
+        if (player != client.getLocalPlayer())
+            return true;
+        if (PvPUtil.isAttackable(client, player))
+            return true;
+        if (inWilderness())
+            return true;
+        return false;
     }
 
     public boolean inWilderness() {
@@ -222,23 +235,6 @@ public class AutoAttackZxcPlugin extends iScript {
 
         return player.getSkullIcon() == SkullIcon.SKULL;
     }
-
-    /*private void selectTarget() {
-        if(config.selectedTarget() == Targets.DISTANCE_TO_PLAYER && nearPlayer()) {
-            targetMenu = new LegacyMenuEntry("", "", targetNPC.getIndex(), opcode, 0, 0, false);
-            utils.doActionMsTime(targetMenu, targetNPC.getConvexHull().getBounds(), random(250));
-        }
-        if(config.selectedTarget() == Targets.SKULLED) {
-            if(player.getSkullIcon() != null && player.getSkullIcon() == SkullIcon.SKULL && nearPlayer()) {
-
-            } else {
-                // no skulled players nearby attack by distance now.
-            }
-        }
-        //if(config.selectedTarget() == Targets.WEALTH) {
-            // check wealth if selected
-        //}
-    }*/
 
     private void setSelectSpell(WidgetInfo info)
     {
