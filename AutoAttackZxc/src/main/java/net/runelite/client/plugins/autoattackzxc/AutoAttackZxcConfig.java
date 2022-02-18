@@ -31,7 +31,7 @@ public interface AutoAttackZxcConfig extends Config {
 
     String spells = "Spells";
     String targets = "Targets";
-    String hotkeys = "Hotkeys";
+    //String hotkeys = "Hotkeys";
 
     @ConfigItem(
             keyName = "quickPrayers",
@@ -92,6 +92,7 @@ public interface AutoAttackZxcConfig extends Config {
         return 126;
     }
 
+    /*
     @ConfigItem(
             keyName = "StartAutoAttack",
             name = "Start/Stop AutoAttack",
@@ -103,6 +104,7 @@ public interface AutoAttackZxcConfig extends Config {
     {
         return Keybind.NOT_SET;
     }
+    */
 
     @ConfigSection(
             keyName = "delayConfig",

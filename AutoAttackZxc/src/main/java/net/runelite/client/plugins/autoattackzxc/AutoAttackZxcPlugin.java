@@ -74,8 +74,8 @@ public class AutoAttackZxcPlugin extends iScript {
     @Inject
     private CalculationUtils calc;
 
-    @Inject
-    private KeyManager keyManager;
+    //@Inject
+    //private KeyManager keyManager;
 
     LegacyMenuEntry targetMenu;
     Spells curSpell;
@@ -88,25 +88,25 @@ public class AutoAttackZxcPlugin extends iScript {
         return configManager.getConfig(AutoAttackZxcConfig.class);
     }
 
-    private final HotkeyListener StartAutoAttack = new HotkeyListener(() -> config.StartAutoAttack())
+    /*private final HotkeyListener StartAutoAttack = new HotkeyListener(() -> config.StartAutoAttack())
     {
         @Override
         public void hotkeyPressed()
         {
             start();
         }
-    };
+    };*/
 
     @Override
     protected void startUp() {
         start();
-        keyManager.registerKeyListener(StartAutoAttack);
+        //keyManager.registerKeyListener(StartAutoAttack);
     }
 
     @Override
     protected void shutDown() {
         stop();
-        keyManager.unregisterKeyListener(StartAutoAttack);
+        //keyManager.unregisterKeyListener(StartAutoAttack);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class AutoAttackZxcPlugin extends iScript {
         stopAttack = true;
     }
 
-    @Subscribe
+    /*@Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
         if (event.getGameState() != GameState.LOGGED_IN)
@@ -140,7 +140,7 @@ public class AutoAttackZxcPlugin extends iScript {
             return;
         }
         keyManager.registerKeyListener(StartAutoAttack);
-    }
+    }*/
 
     @Subscribe
     private void onGameTick(GameTick event) {
